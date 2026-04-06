@@ -7,14 +7,27 @@ from PyQt5.QtWidgets import QApplication, QWidget
 from PyQt5.QtCore import Qt, QTimer, QRectF, QPointF, QPropertyAnimation, pyqtProperty
 from PyQt5.QtGui import QPainter, QColor, QPen, QBrush, QPainterPath
 
+from comtypes import CLSCTX_ALL
+from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+
 HWND_TOPMOST = ctypes.wintypes.HWND(-1)
 SWP_NOMOVE = 0x0002
 SWP_NOSIZE = 0x0001
 SWP_NOACTIVATE = 0x0010
-_SetWindowPos = ctypes.windll.user32.SetWindowPos
+SW_SHOW = 5
+SWP_SHOWWINDOW = 0x0040
 
-from comtypes import CLSCTX_ALL
-from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+_user32 = ctypes.windll.user32
+_kernel32 = ctypes.windll.kernel32
+_SetWindowPos = _user32.SetWindowPos
+_FindWindow = _user32.FindWindowW
+_ShowWindow = _user32.ShowWindow
+_CreateMutex = _kernel32.CreateMutexW
+_GetLastError = _kernel32.GetLastError
+
+MUTEX_NAME = "Global\\StreamerMicIcon_SingleInstance"
+WINDOW_TITLE = "StreamerMicIcon_Overlay"
+ERROR_ALREADY_EXISTS = 183
 
 
 def get_default_mic_mute_state():
@@ -77,6 +90,7 @@ class MicOverlay(QWidget):
             | Qt.Tool
         )
         self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setWindowTitle(WINDOW_TITLE)
         size = self.ICON_SIZE + self.PADDING * 2
         self.setFixedSize(size, size)
 
@@ -84,11 +98,23 @@ class MicOverlay(QWidget):
         self.move(screen.width() - size - 30, screen.height() - size - 80)
 
     def _force_topmost(self):
+        if not self.isVisible():
+            self.show()
         hwnd = int(self.winId())
         _SetWindowPos(
             hwnd, HWND_TOPMOST, 0, 0, 0, 0,
-            SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE,
+            SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_SHOWWINDOW,
         )
+        self._ensure_on_screen()
+
+    def _ensure_on_screen(self):
+        """If the window has drifted offscreen (e.g. monitor disconnected), reset position."""
+        screen = QApplication.primaryScreen().geometry()
+        pos = self.pos()
+        size = self.width()
+        if (pos.x() + size < 0 or pos.x() > screen.width()
+                or pos.y() + size < 0 or pos.y() > screen.height()):
+            self.move(screen.width() - size - 30, screen.height() - size - 80)
 
     def _start_polling(self):
         self._poll_mic()
@@ -197,8 +223,25 @@ class MicOverlay(QWidget):
         QApplication.quit()
 
 
+def _bring_existing_to_front():
+    """Find the already-running instance's window and force it visible."""
+    hwnd = _FindWindow(None, WINDOW_TITLE)
+    if hwnd:
+        _ShowWindow(hwnd, SW_SHOW)
+        _SetWindowPos(
+            hwnd, HWND_TOPMOST, 0, 0, 0, 0,
+            SWP_NOMOVE | SWP_NOSIZE | SWP_SHOWWINDOW,
+        )
+
+
 def main():
-    ctypes.windll.user32.SetProcessDPIAware()
+    _user32.SetProcessDPIAware()
+
+    _mutex = _CreateMutex(None, False, WINDOW_TITLE)
+    if _GetLastError() == ERROR_ALREADY_EXISTS:
+        _bring_existing_to_front()
+        sys.exit(0)
+
     app = QApplication(sys.argv)
     app.setQuitOnLastWindowClosed(True)
     overlay = MicOverlay()
