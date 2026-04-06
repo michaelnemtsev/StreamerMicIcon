@@ -8,6 +8,8 @@ No installation required. Just download the single `.exe` and run it.
 
 ![Windows](https://img.shields.io/badge/platform-Windows-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
+[![Latest Release](https://img.shields.io/github/v/release/michaelnemtsev/StreamerMicIcon)](https://github.com/michaelnemtsev/StreamerMicIcon/releases/latest)
+[![Download](https://img.shields.io/github/downloads/michaelnemtsev/StreamerMicIcon/total)](https://github.com/michaelnemtsev/StreamerMicIcon/releases/latest)
 
 ## Preview
 
@@ -54,7 +56,7 @@ The overlay has no window borders, no title bar, no background — just the mic 
 
 ## Quick Start (portable exe)
 
-Download `StreamerMicIcon.exe` from [Releases](https://github.com/michaelnemtsev/StreamerMicIcon/releases) and run it. No installation or Python needed.
+Download the latest `StreamerMicIcon.exe` from the [latest release](https://github.com/michaelnemtsev/StreamerMicIcon/releases/latest) and run it. No installation or Python needed.
 
 ## Run from Source
 
