@@ -11,6 +11,19 @@ No installation required. Just download the single `.exe` and run it.
 [![Latest Release](https://img.shields.io/github/v/release/michaelnemtsev/StreamerMicIcon)](https://github.com/michaelnemtsev/StreamerMicIcon/releases/latest)
 [![Download](https://img.shields.io/github/downloads/michaelnemtsev/StreamerMicIcon/total)](https://github.com/michaelnemtsev/StreamerMicIcon/releases/latest)
 
+## Preview
+
+<p align="center">
+  <img src="images/mic_live.png" alt="Microphone live indicator - green mic icon" width="128">
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="images/mic_muted.png" alt="Microphone muted indicator - red mic icon with slash" width="128">
+</p>
+
+<p align="center">
+  <b>Live</b> (green) &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <b>Muted</b> (red, flashing)
+</p>
+
 ## What It Does
 
 StreamerMicIcon monitors your Windows default recording device (microphone) and displays a floating, transparent overlay icon on your desktop:
