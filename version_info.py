@@ -1,7 +1,7 @@
 VSVersionInfo(
     ffi=FixedFileInfo(
-        filevers=(1, 0, 1, 0),
-        prodvers=(1, 0, 1, 0),
+        filevers=(1, 0, 2, 0),
+        prodvers=(1, 0, 2, 0),
         mask=0x3F,
         flags=0x0,
         OS=0x40004,
@@ -17,12 +17,12 @@ VSVersionInfo(
                     [
                         StringStruct("CompanyName", "Michael Nemtsev"),
                         StringStruct("FileDescription", "StreamerMicIcon - Microphone Mute Status Overlay"),
-                        StringStruct("FileVersion", "1.0.1.0"),
+                        StringStruct("FileVersion", "1.0.2.0"),
                         StringStruct("InternalName", "StreamerMicIcon"),
                         StringStruct("LegalCopyright", "Copyright (c) 2026 Michael Nemtsev. MIT License."),
                         StringStruct("OriginalFilename", "StreamerMicIcon.exe"),
                         StringStruct("ProductName", "StreamerMicIcon"),
-                        StringStruct("ProductVersion", "1.0.1.0"),
+                        StringStruct("ProductVersion", "1.0.2.0"),
                     ],
                 )
             ]

@@ -4,7 +4,7 @@ import ctypes.wintypes
 from ctypes import cast, POINTER
 
 from PyQt5.QtWidgets import QApplication, QWidget
-from PyQt5.QtCore import Qt, QTimer, QRectF, QPointF, QPropertyAnimation, pyqtProperty
+from PyQt5.QtCore import Qt, QTimer, QRect, QRectF, QPoint, QPointF, QPropertyAnimation, pyqtProperty
 from PyQt5.QtGui import QPainter, QColor, QPen, QBrush, QPainterPath
 
 from comtypes import CLSCTX_ALL
@@ -94,8 +94,7 @@ class MicOverlay(QWidget):
         size = self.ICON_SIZE + self.PADDING * 2
         self.setFixedSize(size, size)
 
-        screen = QApplication.primaryScreen().geometry()
-        self.move(screen.width() - size - 30, screen.height() - size - 80)
+        self.move(self._default_position())
 
     def _force_topmost(self):
         if not self.isVisible():
@@ -109,12 +108,22 @@ class MicOverlay(QWidget):
 
     def _ensure_on_screen(self):
         """If the window has drifted offscreen (e.g. monitor disconnected), reset position."""
-        screen = QApplication.primaryScreen().geometry()
-        pos = self.pos()
+        if self._drag_pos is not None:
+            return
+
+        window_rect = QRect(self.pos(), self.size())
+        if not any(window_rect.intersects(screen.geometry())
+                   for screen in QApplication.screens()):
+            self.move(self._default_position())
+
+    def _default_position(self):
+        """Return the default bottom-right position on the primary screen."""
+        screen = QApplication.primaryScreen()
+        geometry = screen.availableGeometry() if screen else QApplication.desktop().availableGeometry()
         size = self.width()
-        if (pos.x() + size < 0 or pos.x() > screen.width()
-                or pos.y() + size < 0 or pos.y() > screen.height()):
-            self.move(screen.width() - size - 30, screen.height() - size - 80)
+        x = max(geometry.left(), geometry.left() + geometry.width() - size - 30)
+        y = max(geometry.top(), geometry.top() + geometry.height() - size - 80)
+        return QPoint(x, y)
 
     def _start_polling(self):
         self._poll_mic()
