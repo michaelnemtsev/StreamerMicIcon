@@ -24,10 +24,41 @@ _FindWindow = _user32.FindWindowW
 _ShowWindow = _user32.ShowWindow
 _CreateMutex = _kernel32.CreateMutexW
 _GetLastError = _kernel32.GetLastError
+_SetProcessDpiAwarenessContext = getattr(_user32, "SetProcessDpiAwarenessContext", None)
+_SetProcessDPIAware = _user32.SetProcessDPIAware
+_CloseHandle = _kernel32.CloseHandle
 
-MUTEX_NAME = "Global\\StreamerMicIcon_SingleInstance"
+_SetWindowPos.argtypes = [
+    ctypes.wintypes.HWND,
+    ctypes.wintypes.HWND,
+    ctypes.c_int,
+    ctypes.c_int,
+    ctypes.c_int,
+    ctypes.c_int,
+    ctypes.c_uint,
+]
+_SetWindowPos.restype = ctypes.wintypes.BOOL
+_FindWindow.argtypes = [ctypes.wintypes.LPCWSTR, ctypes.wintypes.LPCWSTR]
+_FindWindow.restype = ctypes.wintypes.HWND
+_ShowWindow.argtypes = [ctypes.wintypes.HWND, ctypes.c_int]
+_ShowWindow.restype = ctypes.wintypes.BOOL
+_CreateMutex.argtypes = [ctypes.wintypes.LPVOID, ctypes.wintypes.BOOL, ctypes.wintypes.LPCWSTR]
+_CreateMutex.restype = ctypes.wintypes.HANDLE
+_GetLastError.argtypes = []
+_GetLastError.restype = ctypes.wintypes.DWORD
+_SetProcessDPIAware.argtypes = []
+_SetProcessDPIAware.restype = ctypes.wintypes.BOOL
+_CloseHandle.argtypes = [ctypes.wintypes.HANDLE]
+_CloseHandle.restype = ctypes.wintypes.BOOL
+if _SetProcessDpiAwarenessContext is not None:
+    _SetProcessDpiAwarenessContext.argtypes = [ctypes.wintypes.HANDLE]
+    _SetProcessDpiAwarenessContext.restype = ctypes.wintypes.BOOL
+
+MUTEX_NAME = "Local\\StreamerMicIcon_SingleInstance"
+LEGACY_MUTEX_NAME = "StreamerMicIcon_Overlay"
 WINDOW_TITLE = "StreamerMicIcon_Overlay"
 ERROR_ALREADY_EXISTS = 183
+DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = ctypes.wintypes.HANDLE(-4)
 
 
 def get_default_mic_mute_state():
@@ -243,12 +274,36 @@ def _bring_existing_to_front():
         )
 
 
-def main():
-    _user32.SetProcessDPIAware()
+def _enable_dpi_awareness():
+    """Prefer per-monitor DPI awareness, falling back on older Windows APIs."""
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+    QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
 
-    _mutex = _CreateMutex(None, False, WINDOW_TITLE)
-    if _GetLastError() == ERROR_ALREADY_EXISTS:
+    if _SetProcessDpiAwarenessContext is not None:
+        if _SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2):
+            return
+
+    _SetProcessDPIAware()
+
+
+def _create_mutex(name):
+    handle = _CreateMutex(None, False, name)
+    return handle, _GetLastError()
+
+
+def main():
+    _enable_dpi_awareness()
+
+    _mutex, error = _create_mutex(MUTEX_NAME)
+    if error == ERROR_ALREADY_EXISTS:
         _bring_existing_to_front()
+        sys.exit(0)
+
+    _legacy_mutex, error = _create_mutex(LEGACY_MUTEX_NAME)
+    if error == ERROR_ALREADY_EXISTS:
+        _bring_existing_to_front()
+        if _mutex:
+            _CloseHandle(_mutex)
         sys.exit(0)
 
     app = QApplication(sys.argv)
